@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Executive Attendance Certification - AttendIQ WorkforceOS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1e293b;
+            background: #ffffff;
+            margin: 40px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+        .title h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #0f172a;
+        }
+        .title p {
+            margin: 4px 0 0 0;
+            color: #64748b;
+        }
+        .metrics-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .metric-box {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 12px 16px;
+            background: #f8fafc;
+        }
+        .metric-box span {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .metric-box strong {
+            font-size: 20px;
+            color: #0f172a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #334155;
+        }
+        .reconciliation-box {
+            border: 1px solid #22c55e;
+            background: #f0fdf4;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 60px;
+            padding-top: 20px;
+        }
+        .sig-line {
+            width: 220px;
+            border-top: 1px solid #0f172a;
+            text-align: center;
+            padding-top: 8px;
+            font-weight: 600;
+        }
+        @media print {
+            .no-print { display: none; }
+            body { margin: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom: 20px;">
+        <button onclick="window.print()" style="padding: 10px 18px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            🖨️ Print Report / Save as PDF
+        </button>
+        <button onclick="window.close()" style="padding: 10px 18px; background: #e2e8f0; color: #334155; border: none; border-radius: 6px; cursor: pointer; margin-left: 10px;">
+            Close
+        </button>
+    </div>
+
+    <div class="header">
+        <div class="title">
+            <h1>AttendIQ Enterprise WorkforceOS</h1>
+            <p>Official Attendance & Absenteeism Verification Report</p>
+        </div>
+        <div style="text-align: right; color: #64748b; font-size: 11px;">
+            <div><strong>Organization:</strong> Apex Global Technologies</div>
+            <div><strong>Printed:</strong> {{ printed_at }}</div>
+            <div><strong>Standard:</strong> Present / (Present + Absent) &times; 100</div>
+        </div>
+    </div>
+
+    <div class="metrics-summary">
+        <div class="metric-box">
+            <span>Overall Attendance</span>
+            <strong>{{ summary.attendance_percentage }}%</strong>
+        </div>
+        <div class="metric-box">
+            <span>Overall Absenteeism</span>
+            <strong>{{ summary.absenteeism_percentage }}%</strong>
+        </div>
+        <div class="metric-box">
+            <span>Total Present</span>
+            <strong>{{ summary.total_present }}</strong>
+        </div>
+        <div class="metric-box">
+            <span>Total Absent</span>
+            <strong>{{ summary.total_absent }}</strong>
+        </div>
+    </div>
+
+    <h3>Department-Level Attendance Summary</h3>
+    <p style="font-size: 11px; color: #64748b; margin-top: -8px;">Department percentages calculated strictly from aggregated department totals.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Department</th>
+                <th>Total Records</th>
+                <th>Present</th>
+                <th>Absent</th>
+                <th>Leave</th>
+                <th>Holiday</th>
+                <th>Attendance %</th>
+                <th>Absenteeism %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in departments %}
+            <tr>
+                <td><strong>{{ d.department }}</strong></td>
+                <td>{{ d.total_records }}</td>
+                <td>{{ d.present }}</td>
+                <td>{{ d.absent }}</td>
+                <td>{{ d.leave }}</td>
+                <td>{{ d.holiday }}</td>
+                <td><strong>{{ d.attendance_percentage }}%</strong></td>
+                <td>{{ d.absenteeism_percentage }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="reconciliation-box">
+        <strong>✓ Mathematical Reconciliation Audit</strong>
+        <p style="margin: 4px 0 0 0; font-size: 12px; color: #166534;">
+            {{ reconciliation.audit_notes }}. All raw logs, employee groupings, and department aggregations reconcile to exactly {{ reconciliation.raw_records_count }} records with zero variance.
+        </p>
+    </div>
+
+    <div class="signatures">
+        <div class="sig-line">Human Resources Manager</div>
+        <div class="sig-line">Director of Operations</div>
+        <div class="sig-line">Internal Audit Officer</div>
+    </div>
+</body>
+</html>

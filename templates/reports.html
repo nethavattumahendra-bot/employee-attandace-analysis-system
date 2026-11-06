@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Visualizations | Employee Attendance Analysis System{% endblock %}
+{% block page_title %}Reports & Visualizations Center{% endblock %}
+{% block page_subtitle %}Download structured CSV analytical reports and high-resolution Matplotlib charts{% endblock %}
+
+{% block content %}
+<!-- Data Reconciliation Status Banner -->
+<div class="card-container mb-4">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+        <div>
+            <h3 style="font-size: 17px; font-weight: 600;"><i class="fa-solid fa-clipboard-check"></i> System Audit & Report Synchronization</h3>
+            <p class="text-muted text-sm">Automated reconciliation checks ensure source records match calculated reports 100%.</p>
+        </div>
+        <form method="POST" action="{{ url_for('refresh_reports_endpoint') }}">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-arrows-rotate"></i> Regenerate Reports & Run Audit
+            </button>
+        </form>
+    </div>
+
+    {% if reconciliation.is_reconciled %}
+    <div class="reconciliation-box status-pass">
+        <div class="reconciliation-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="reconciliation-content">
+            <h4>Data Reconciliation Audit: PASSED (100% Verified)</h4>
+            <p>Every metric in the aggregated reports rigorously matches the underlying attendance transaction logs.</p>
+            <div class="reconciliation-tags">
+                <span class="tag">Present: {{ reconciliation.raw_totals.present }}</span>
+                <span class="tag">Absent: {{ reconciliation.raw_totals.absent }}</span>
+                <span class="tag">Leave: {{ reconciliation.raw_totals.leave }}</span>
+                <span class="tag">Holiday: {{ reconciliation.raw_totals.holiday }}</span>
+                <span class="tag">Total Rows: {{ reconciliation.raw_totals.total }}</span>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="reconciliation-box status-fail">
+        <div class="reconciliation-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="reconciliation-content">
+            <h4>Data Reconciliation Discrepancy Detected</h4>
+            <ul class="error-list">
+                {% for err in reconciliation.discrepancies %}
+                <li>{{ err }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- CSV Reports Download Grid -->
+<div class="section-title">
+    <h3><i class="fa-solid fa-file-csv"></i> Download Official CSV Reports</h3>
+</div>
+
+<div class="reports-download-grid mb-4">
+    <div class="download-card">
+        <div class="file-icon icon-csv"><i class="fa-solid fa-file-csv"></i></div>
+        <div class="file-meta">
+            <h4>Employee Attendance Percentage</h4>
+            <p>Individual employee attendance and absenteeism statistics with effective day counts.</p>
+            <a href="{{ url_for('download_report_file', filename='employee_attendance_percentage.csv') }}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-download"></i> Download CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="download-card">
+        <div class="file-icon icon-csv"><i class="fa-solid fa-file-csv"></i></div>
+        <div class="file-meta">
+            <h4>Department Summary Report</h4>
+            <p>Department-level totals and aggregated attendance percentages derived from department sums.</p>
+            <a href="{{ url_for('download_report_file', filename='department_summary_report.csv') }}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-download"></i> Download CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="download-card">
+        <div class="file-icon icon-csv"><i class="fa-solid fa-file-csv"></i></div>
+        <div class="file-meta">
+            <h4>Monthly Attendance Trend Report</h4>
+            <p>Historical month-over-month trends in attendance, absenteeism, leave, and holiday volumes.</p>
+            <a href="{{ url_for('download_report_file', filename='monthly_trend_report.csv') }}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-download"></i> Download CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="download-card">
+        <div class="file-icon icon-csv"><i class="fa-solid fa-file-csv"></i></div>
+        <div class="file-meta">
+            <h4>Monthly Detailed Attendance Report</h4>
+            <p>Granular employee-by-month attendance breakdown for auditing and payroll reconciliation.</p>
+            <a href="{{ url_for('download_report_file', filename='monthly_attendance_report.csv') }}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-download"></i> Download CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="download-card">
+        <div class="file-icon" style="color: #ea580c; font-size: 32px; margin-bottom: 12px;"><i class="fa-solid fa-file-powerpoint"></i></div>
+        <div class="file-meta">
+            <h4>Executive Project Presentation</h4>
+            <p>Complete 8-slide PowerPoint deck covering architecture, mathematical proof, charts, and QA.</p>
+            <a href="{{ url_for('download_presentation_file') }}" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-download"></i> Download PPTX
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Matplotlib High-Resolution Visualizations Gallery -->
+<div class="section-title">
+    <h3><i class="fa-solid fa-chart-line"></i> High-Resolution Matplotlib Visualizations</h3>
+</div>
+
+<div class="charts-gallery-grid">
+    <!-- Chart 1 -->
+    <div class="gallery-card">
+        <div class="gallery-header">
+            <h4>1. Employee Absenteeism Ranking</h4>
+            <a href="{{ url_for('download_report_file', filename='employee_absenteeism.png') }}" class="btn-icon" title="Download High-Res PNG">
+                <i class="fa-solid fa-download"></i>
+            </a>
+        </div>
+        <div class="gallery-img-wrap" onclick="viewChartModal('{{ url_for('serve_chart_image', filename='employee_absenteeism.png') }}', 'Employee Absenteeism Chart')">
+            <img src="{{ url_for('serve_chart_image', filename='employee_absenteeism.png') }}" alt="Employee Absenteeism">
+            <span class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i> Click to Zoom</span>
+        </div>
+    </div>
+
+    <!-- Chart 2 -->
+    <div class="gallery-card">
+        <div class="gallery-header">
+            <h4>2. Monthly Attendance Trends</h4>
+            <a href="{{ url_for('download_report_file', filename='monthly_attendance_trend.png') }}" class="btn-icon" title="Download High-Res PNG">
+                <i class="fa-solid fa-download"></i>
+            </a>
+        </div>
+        <div class="gallery-img-wrap" onclick="viewChartModal('{{ url_for('serve_chart_image', filename='monthly_attendance_trend.png') }}', 'Monthly Attendance Trends')">
+            <img src="{{ url_for('serve_chart_image', filename='monthly_attendance_trend.png') }}" alt="Monthly Trends">
+            <span class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i> Click to Zoom</span>
+        </div>
+    </div>
+
+    <!-- Chart 3 -->
+    <div class="gallery-card">
+        <div class="gallery-header">
+            <h4>3. Department Comparison</h4>
+            <a href="{{ url_for('download_report_file', filename='department_comparison.png') }}" class="btn-icon" title="Download High-Res PNG">
+                <i class="fa-solid fa-download"></i>
+            </a>
+        </div>
+        <div class="gallery-img-wrap" onclick="viewChartModal('{{ url_for('serve_chart_image', filename='department_comparison.png') }}', 'Department Attendance Comparison')">
+            <img src="{{ url_for('serve_chart_image', filename='department_comparison.png') }}" alt="Department Comparison">
+            <span class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i> Click to Zoom</span>
+        </div>
+    </div>
+
+    <!-- Chart 4 -->
+    <div class="gallery-card">
+        <div class="gallery-header">
+            <h4>4. Status Distribution</h4>
+            <a href="{{ url_for('download_report_file', filename='attendance_status_distribution.png') }}" class="btn-icon" title="Download High-Res PNG">
+                <i class="fa-solid fa-download"></i>
+            </a>
+        </div>
+        <div class="gallery-img-wrap" onclick="viewChartModal('{{ url_for('serve_chart_image', filename='attendance_status_distribution.png') }}', 'Attendance Status Distribution')">
+            <img src="{{ url_for('serve_chart_image', filename='attendance_status_distribution.png') }}" alt="Status Distribution">
+            <span class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i> Click to Zoom</span>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Lightbox Chart Viewer -->
+<div id="chartViewerModal" class="modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalChartTitle">Chart Preview</h3>
+                <button type="button" class="close-modal" onclick="closeModal('chartViewerModal')">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalChartImg" src="" alt="Full Chart" style="max-width: 100%; border-radius: 8px;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function viewChartModal(src, title) {
+    document.getElementById('modalChartImg').src = src;
+    document.getElementById('modalChartTitle').innerText = title;
+    openModal('chartViewerModal');
+}
+</script>
+{% endblock %}

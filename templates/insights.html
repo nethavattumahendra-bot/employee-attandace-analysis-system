@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}AI Workforce Insights | AttendIQ WorkforceOS{% endblock %}
+{% block page_title %}AI-Powered Workforce Insights{% endblock %}
+{% block page_subtitle %}Predictive diagnostics, statistical anomaly detection, and operational staffing forecasts{% endblock %}
+
+{% block content %}
+<!-- Executive Narrative Banner -->
+<div class="card" style="margin-bottom: 24px; border-left: 4px solid #3b82f6;">
+    <div class="card-body">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span class="badge badge-pill-accent"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Executive Brief</span>
+                    <span class="text-muted" style="font-size: 0.8125rem;">Generated across {{ insights.total_logs_analyzed }} verified records</span>
+                </div>
+                <p style="font-size: 1.05rem; line-height: 1.6; color: #1e293b; margin: 0; font-weight: 500;">
+                    {{ insights.executive_summary }}
+                </p>
+            </div>
+
+            <!-- Health Score Widget -->
+            <div class="health-score-widget">
+                <div class="health-score-circle {% if insights.health_score >= 80 %}score-good{% elif insights.health_score >= 60 %}score-fair{% else %}score-poor{% endif %}">
+                    <span class="score-number">{{ insights.health_score }}</span>
+                    <span class="score-label">/ 100</span>
+                </div>
+                <div class="health-meta">
+                    <strong>Workforce Health</strong>
+                    <span class="status-pill status-{{ insights.health_status|lower|replace(' ', '-') }}">{{ insights.health_status }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Anomalies & Staffing Shortage Forecasts Grid -->
+<div class="content-split-grid">
+    <!-- Left Column: Detected Statistical Anomalies -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Statistical Anomalies Flagged</h3>
+            <span class="badge badge-warning">{{ insights.anomalies|length }} detected</span>
+        </div>
+        <div class="card-body">
+            {% if insights.anomalies %}
+                <div class="anomaly-list">
+                    {% for a in insights.anomalies %}
+                    <div class="anomaly-item">
+                        <div class="anomaly-badge severity-{{ a.severity|lower }}">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div class="anomaly-details">
+                            <div class="anomaly-title">
+                                <strong>{{ a.type }}</strong>
+                                <span class="badge badge-{{ 'danger' if a.severity == 'High' else 'warning' }}">{{ a.severity }}</span>
+                            </div>
+                            <div class="anomaly-date text-muted"><i class="fa-regular fa-calendar"></i> {{ a.date }}</div>
+                            <p class="anomaly-text">{{ a.detail }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-circle-check text-success" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                    <p>No statistical anomalies or clustering tendencies detected in current cycle.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Staffing Shortage Risks -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fa-solid fa-user-clock text-primary"></i> Forward Staffing Shortage Risks</h3>
+            <span class="badge badge-pill-accent">Predictive</span>
+        </div>
+        <div class="card-body">
+            {% if insights.staffing_risks %}
+                <div class="risk-list">
+                    {% for r in insights.staffing_risks %}
+                    <div class="risk-item">
+                        <div class="risk-indicator risk-{{ r.risk_level|lower }}"></div>
+                        <div class="risk-content">
+                            <strong>{{ r.title }}</strong>
+                            <p class="text-muted" style="margin: 4px 0 8px 0; font-size: 0.875rem;">{{ r.description }}</p>
+                            <div class="risk-action">
+                                <i class="fa-solid fa-arrow-right text-primary"></i>
+                                <span>{{ r.action }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-shield-halved text-success" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                    <p>Departmental rosters are balanced. No imminent staffing deficits identified.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Department Friction Diagnostics -->
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fa-solid fa-chart-line text-primary"></i> Department Friction & Engagement Diagnostics</h3>
+        <span class="text-muted" style="font-size: 0.8125rem;">Benchmark: Absenteeism tolerance threshold at 10.0%</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th>Attendance %</th>
+                    <th>Absenteeism %</th>
+                    <th>Leaves Logged</th>
+                    <th>Status Evaluation</th>
+                    <th>AI Diagnostic Finding</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in insights.department_insights %}
+                <tr>
+                    <td><strong>{{ d.department }}</strong></td>
+                    <td>
+                        <span class="badge badge-success">{{ d.attendance_rate }}%</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if d.absenteeism_rate > 15 %}badge-danger{% elif d.absenteeism_rate > 8 %}badge-warning{% else %}badge-info{% endif %}">
+                            {{ d.absenteeism_rate }}%
+                        </span>
+                    </td>
+                    <td>{{ d.leave_count }}</td>
+                    <td>
+                        <span class="status-pill status-{{ d.status_flag|lower|replace(' ', '-') }}">{{ d.status_flag }}</span>
+                    </td>
+                    <td>{{ d.note }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Operational Recommendations -->
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fa-solid fa-lightbulb text-warning"></i> Actionable Operational Recommendations</h3>
+    </div>
+    <div class="card-body">
+        <ul class="recommendation-list">
+            {% for rec in insights.recommendations %}
+            <li class="recommendation-item">
+                <i class="fa-solid fa-circle-check text-primary"></i>
+                <span>{{ rec }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Advisory Disclaimer -->
+<div class="alert alert-info" style="margin-top: 24px; font-size: 0.8125rem;">
+    <i class="fa-solid fa-circle-info"></i>
+    <span>{{ insights.disclaimer }}</span>
+</div>
+{% endblock %}

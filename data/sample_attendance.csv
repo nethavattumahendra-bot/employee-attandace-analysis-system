@@ -1,0 +1,181 @@
+employee_code,attendance_date,status,remarks
+EMP001,2026-09-01,Present,Regular check-in
+EMP002,2026-09-01,Present,Regular check-in
+EMP003,2026-09-01,Absent,Unexcused absence
+EMP004,2026-09-01,Present,Regular check-in
+EMP005,2026-09-01,Present,Regular check-in
+EMP006,2026-09-01,Present,Regular check-in
+EMP007,2026-09-01,Present,Regular check-in
+EMP008,2026-09-01,Leave,Approved medical leave
+EMP009,2026-09-01,Present,Regular check-in
+EMP010,2026-09-01,Present,Regular check-in
+EMP011,2026-09-01,Absent,No show
+EMP012,2026-09-01,Present,Regular check-in
+EMP001,2026-09-02,Present,Regular check-in
+EMP002,2026-09-02,Present,Regular check-in
+EMP003,2026-09-02,Present,Regular check-in
+EMP004,2026-09-02,Present,Regular check-in
+EMP005,2026-09-02,Present,Regular check-in
+EMP006,2026-09-02,Leave,Annual leave
+EMP007,2026-09-02,Present,Regular check-in
+EMP008,2026-09-02,Leave,Approved medical leave
+EMP009,2026-09-02,Present,Regular check-in
+EMP010,2026-09-02,Present,Regular check-in
+EMP011,2026-09-02,Present,Regular check-in
+EMP012,2026-09-02,Present,Regular check-in
+EMP001,2026-09-03,Present,Regular check-in
+EMP002,2026-09-03,Absent,Family emergency
+EMP003,2026-09-03,Present,Regular check-in
+EMP004,2026-09-03,Present,Regular check-in
+EMP005,2026-09-03,Present,Regular check-in
+EMP006,2026-09-03,Leave,Annual leave
+EMP007,2026-09-03,Absent,Unannounced
+EMP008,2026-09-03,Present,Regular check-in
+EMP009,2026-09-03,Present,Regular check-in
+EMP010,2026-09-03,Present,Regular check-in
+EMP011,2026-09-03,Present,Regular check-in
+EMP012,2026-09-03,Present,Regular check-in
+EMP001,2026-09-04,Present,Regular check-in
+EMP002,2026-09-04,Present,Regular check-in
+EMP003,2026-09-04,Present,Regular check-in
+EMP004,2026-09-04,Leave,Personal leave
+EMP005,2026-09-04,Present,Regular check-in
+EMP006,2026-09-04,Present,Regular check-in
+EMP007,2026-09-04,Present,Regular check-in
+EMP008,2026-09-04,Present,Regular check-in
+EMP009,2026-09-04,Absent,Unexcused absence
+EMP010,2026-09-04,Present,Regular check-in
+EMP011,2026-09-04,Present,Regular check-in
+EMP012,2026-09-04,Present,Regular check-in
+EMP001,2026-09-07,Present,Regular check-in
+EMP002,2026-09-07,Present,Regular check-in
+EMP003,2026-09-07,Present,Regular check-in
+EMP004,2026-09-07,Present,Regular check-in
+EMP005,2026-09-07,Present,Regular check-in
+EMP006,2026-09-07,Present,Regular check-in
+EMP007,2026-09-07,Present,Regular check-in
+EMP008,2026-09-07,Present,Regular check-in
+EMP009,2026-09-07,Present,Regular check-in
+EMP010,2026-09-07,Absent,Unexcused absence
+EMP011,2026-09-07,Present,Regular check-in
+EMP012,2026-09-07,Present,Regular check-in
+EMP001,2026-09-08,Holiday,Labor Day Holiday
+EMP002,2026-09-08,Holiday,Labor Day Holiday
+EMP003,2026-09-08,Holiday,Labor Day Holiday
+EMP004,2026-09-08,Holiday,Labor Day Holiday
+EMP005,2026-09-08,Holiday,Labor Day Holiday
+EMP006,2026-09-08,Holiday,Labor Day Holiday
+EMP007,2026-09-08,Holiday,Labor Day Holiday
+EMP008,2026-09-08,Holiday,Labor Day Holiday
+EMP009,2026-09-08,Holiday,Labor Day Holiday
+EMP010,2026-09-08,Holiday,Labor Day Holiday
+EMP011,2026-09-08,Holiday,Labor Day Holiday
+EMP012,2026-09-08,Holiday,Labor Day Holiday
+EMP001,2026-09-09,Present,Regular check-in
+EMP002,2026-09-09,Present,Regular check-in
+EMP003,2026-09-09,Present,Regular check-in
+EMP004,2026-09-09,Present,Regular check-in
+EMP005,2026-09-09,Present,Regular check-in
+EMP006,2026-09-09,Present,Regular check-in
+EMP007,2026-09-09,Present,Regular check-in
+EMP008,2026-09-09,Present,Regular check-in
+EMP009,2026-09-09,Present,Regular check-in
+EMP010,2026-09-09,Present,Regular check-in
+EMP011,2026-09-09,Present,Regular check-in
+EMP012,2026-09-09,Leave,Sick leave
+EMP001,2026-09-10,Present,Regular check-in
+EMP002,2026-09-10,Present,Regular check-in
+EMP003,2026-09-10,Absent,Unexcused absence
+EMP004,2026-09-10,Present,Regular check-in
+EMP005,2026-09-10,Present,Regular check-in
+EMP006,2026-09-10,Present,Regular check-in
+EMP007,2026-09-10,Present,Regular check-in
+EMP008,2026-09-10,Present,Regular check-in
+EMP009,2026-09-10,Present,Regular check-in
+EMP010,2026-09-10,Present,Regular check-in
+EMP011,2026-09-10,Absent,No show
+EMP012,2026-09-10,Present,Regular check-in
+EMP001,2026-10-01,Present,Regular check-in
+EMP002,2026-10-01,Present,Regular check-in
+EMP003,2026-10-01,Present,Regular check-in
+EMP004,2026-10-01,Present,Regular check-in
+EMP005,2026-10-01,Present,Regular check-in
+EMP006,2026-10-01,Present,Regular check-in
+EMP007,2026-10-01,Present,Regular check-in
+EMP008,2026-10-01,Present,Regular check-in
+EMP009,2026-10-01,Present,Regular check-in
+EMP010,2026-10-01,Present,Regular check-in
+EMP011,2026-10-01,Present,Regular check-in
+EMP012,2026-10-01,Present,Regular check-in
+EMP001,2026-10-02,Holiday,National Holiday
+EMP002,2026-10-02,Holiday,National Holiday
+EMP003,2026-10-02,Holiday,National Holiday
+EMP004,2026-10-02,Holiday,National Holiday
+EMP005,2026-10-02,Holiday,National Holiday
+EMP006,2026-10-02,Holiday,National Holiday
+EMP007,2026-10-02,Holiday,National Holiday
+EMP008,2026-10-02,Holiday,National Holiday
+EMP009,2026-10-02,Holiday,National Holiday
+EMP010,2026-10-02,Holiday,National Holiday
+EMP011,2026-10-02,Holiday,National Holiday
+EMP012,2026-10-02,Holiday,National Holiday
+EMP001,2026-10-05,Present,Regular check-in
+EMP002,2026-10-05,Present,Regular check-in
+EMP003,2026-10-05,Leave,Casual leave
+EMP004,2026-10-05,Present,Regular check-in
+EMP005,2026-10-05,Present,Regular check-in
+EMP006,2026-10-05,Present,Regular check-in
+EMP007,2026-10-05,Absent,Sick without notice
+EMP008,2026-10-05,Present,Regular check-in
+EMP009,2026-10-05,Present,Regular check-in
+EMP010,2026-10-05,Present,Regular check-in
+EMP011,2026-10-05,Present,Regular check-in
+EMP012,2026-10-05,Present,Regular check-in
+EMP001,2026-10-06,Present,Regular check-in
+EMP002,2026-10-06,Present,Regular check-in
+EMP003,2026-10-06,Present,Regular check-in
+EMP004,2026-10-06,Present,Regular check-in
+EMP005,2026-10-06,Present,Regular check-in
+EMP006,2026-10-06,Present,Regular check-in
+EMP007,2026-10-06,Present,Regular check-in
+EMP008,2026-10-06,Leave,Medical checkup
+EMP009,2026-10-06,Present,Regular check-in
+EMP010,2026-10-06,Present,Regular check-in
+EMP011,2026-10-06,Absent,No show
+EMP012,2026-10-06,Present,Regular check-in
+EMP001,2026-10-07,Present,Regular check-in
+EMP002,2026-10-07,Present,Regular check-in
+EMP003,2026-10-07,Present,Regular check-in
+EMP004,2026-10-07,Present,Regular check-in
+EMP005,2026-10-07,Present,Regular check-in
+EMP006,2026-10-07,Present,Regular check-in
+EMP007,2026-10-07,Present,Regular check-in
+EMP008,2026-10-07,Present,Regular check-in
+EMP009,2026-10-07,Present,Regular check-in
+EMP010,2026-10-07,Leave,Client visit out of station
+EMP011,2026-10-07,Present,Regular check-in
+EMP012,2026-10-07,Present,Regular check-in
+EMP001,2026-10-08,Absent,Unexcused absence
+EMP002,2026-10-08,Present,Regular check-in
+EMP003,2026-10-08,Present,Regular check-in
+EMP004,2026-10-08,Present,Regular check-in
+EMP005,2026-10-08,Present,Regular check-in
+EMP006,2026-10-08,Present,Regular check-in
+EMP007,2026-10-08,Present,Regular check-in
+EMP008,2026-10-08,Present,Regular check-in
+EMP009,2026-10-08,Absent,Car breakdown
+EMP010,2026-10-08,Present,Regular check-in
+EMP011,2026-10-08,Present,Regular check-in
+EMP012,2026-10-08,Present,Regular check-in
+EMP001,2026-10-09,Present,Regular check-in
+EMP002,2026-10-09,Present,Regular check-in
+EMP003,2026-10-09,Present,Regular check-in
+EMP004,2026-10-09,Present,Regular check-in
+EMP005,2026-10-09,Present,Regular check-in
+EMP006,2026-10-09,Present,Regular check-in
+EMP007,2026-10-09,Present,Regular check-in
+EMP008,2026-10-09,Present,Regular check-in
+EMP009,2026-10-09,Present,Regular check-in
+EMP010,2026-10-09,Present,Regular check-in
+EMP011,2026-10-09,Present,Regular check-in
+EMP012,2026-10-09,Present,Regular check-in

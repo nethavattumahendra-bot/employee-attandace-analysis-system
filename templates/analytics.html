@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics | Employee Attendance Analysis System{% endblock %}
+{% block page_title %}Attendance Analytics & Aggregations{% endblock %}
+{% block page_subtitle %}In-depth statistical breakdown using Pandas & NumPy analytical engine{% endblock %}
+
+{% block content %}
+<!-- Filter Controls -->
+<div class="card-container mb-4">
+    <form method="GET" action="{{ url_for('analytics_page') }}" class="analytics-filter-bar">
+        <div class="filter-item">
+            <label for="month"><i class="fa-regular fa-calendar"></i> Month:</label>
+            <select id="month" name="month" class="form-control" onchange="this.form.submit()">
+                <option value="">All Months (Cumulative)</option>
+                {% for m in available_months %}
+                <option value="{{ m }}" {% if month_filter == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label for="department"><i class="fa-solid fa-building"></i> Department:</label>
+            <select id="department" name="department" class="form-control" onchange="this.form.submit()">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d }}" {% if dept_filter == d %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if month_filter or dept_filter %}
+        <div class="filter-item align-self-end">
+            <a href="{{ url_for('analytics_page') }}" class="btn btn-outline">Clear Filters</a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Aggregation Summary Banner -->
+<div class="metrics-grid mb-4">
+    <div class="metric-card">
+        <div class="metric-icon icon-blue"><i class="fa-solid fa-list-check"></i></div>
+        <div class="metric-details">
+            <span class="metric-label">Filtered Records</span>
+            <h2 class="metric-val">{{ overall.total_records }}</h2>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon icon-green"><i class="fa-solid fa-user-check"></i></div>
+        <div class="metric-details">
+            <span class="metric-label">Attendance Rate</span>
+            <h2 class="metric-val text-success">{{ overall.attendance_percentage }}%</h2>
+            <small class="text-muted">{{ overall.total_present }} Present</small>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon icon-red"><i class="fa-solid fa-user-xmark"></i></div>
+        <div class="metric-details">
+            <span class="metric-label">Absenteeism Rate</span>
+            <h2 class="metric-val text-danger">{{ overall.absenteeism_percentage }}%</h2>
+            <small class="text-muted">{{ overall.total_absent }} Absent</small>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon icon-purple"><i class="fa-solid fa-umbrella-beach"></i></div>
+        <div class="metric-details">
+            <span class="metric-label">Excluded Denominator Days</span>
+            <h2 class="metric-val">{{ overall.total_leave + overall.total_holiday }}</h2>
+            <small class="text-muted">{{ overall.total_leave }} Leaves &bull; {{ overall.total_holiday }} Holidays</small>
+        </div>
+    </div>
+</div>
+
+<!-- Section 1: Department-wise Summary -->
+<div class="card-container mb-4">
+    <div class="card-header">
+        <div class="title-with-badge">
+            <h3><i class="fa-solid fa-building-user"></i> Department-Wise Attendance Summary</h3>
+            <span class="badge badge-info">Calculated From Department Totals</span>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th>Staff Count</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Leave</th>
+                    <th>Holiday</th>
+                    <th>Effective (P+A)</th>
+                    <th>Attendance %</th>
+                    <th>Absenteeism %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in dept_summary %}
+                <tr>
+                    <td><strong>{{ row.department }}</strong></td>
+                    <td>{{ row.employee_count }}</td>
+                    <td><span class="text-success font-bold">{{ row.present }}</span></td>
+                    <td><span class="text-danger font-bold">{{ row.absent }}</span></td>
+                    <td>{{ row.leave }}</td>
+                    <td>{{ row.holiday }}</td>
+                    <td>{{ row.effective_days }}</td>
+                    <td>
+                        <div class="pct-bar-wrapper">
+                            <span class="pct-val font-bold text-success">{{ row.attendance_pct }}%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill fill-success" style="width: {{ row.attendance_pct }}%;"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="pct-bar-wrapper">
+                            <span class="pct-val font-bold text-danger">{{ row.absenteeism_pct }}%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill fill-danger" style="width: {{ row.absenteeism_pct }}%;"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center empty-state">No department records available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Section 2: Employee-wise Summary -->
+<div class="card-container mb-4">
+    <div class="card-header">
+        <h3><i class="fa-solid fa-users-viewfinder"></i> Employee-Wise Attendance Summary</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Leave</th>
+                    <th>Holiday</th>
+                    <th>Total Logs</th>
+                    <th>Effective (P+A)</th>
+                    <th>Attendance %</th>
+                    <th>Absenteeism %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in emp_summary %}
+                <tr>
+                    <td><strong>{{ row.employee_code }}</strong></td>
+                    <td>{{ row.employee_name }}</td>
+                    <td><span class="dept-pill">{{ row.department }}</span></td>
+                    <td><span class="text-success font-bold">{{ row.present }}</span></td>
+                    <td><span class="text-danger font-bold">{{ row.absent }}</span></td>
+                    <td>{{ row.leave }}</td>
+                    <td>{{ row.holiday }}</td>
+                    <td>{{ row.total_records }}</td>
+                    <td>{{ row.effective_days }}</td>
+                    <td><strong>{{ row.attendance_pct }}%</strong></td>
+                    <td>
+                        <span class="badge {% if row.absenteeism_pct > 15 %}badge-danger{% elif row.absenteeism_pct > 0 %}badge-warning{% else %}badge-success{% endif %}">
+                            {{ row.absenteeism_pct }}%
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="11" class="text-center empty-state">No employee records match the filters.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Section 3: Monthly Trends -->
+<div class="card-container mb-4">
+    <div class="card-header">
+        <h3><i class="fa-solid fa-arrow-trend-up"></i> Monthly Trends Breakdown</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Year - Month</th>
+                    <th>Present Days</th>
+                    <th>Absent Days</th>
+                    <th>Approved Leave</th>
+                    <th>Holidays</th>
+                    <th>Total Logged</th>
+                    <th>Effective (P+A)</th>
+                    <th>Attendance %</th>
+                    <th>Absenteeism %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in trends %}
+                <tr>
+                    <td><strong>{{ row.year_month }}</strong></td>
+                    <td><span class="text-success font-bold">{{ row.present }}</span></td>
+                    <td><span class="text-danger font-bold">{{ row.absent }}</span></td>
+                    <td>{{ row.leave }}</td>
+                    <td>{{ row.holiday }}</td>
+                    <td>{{ row.total_records }}</td>
+                    <td>{{ row.effective_days }}</td>
+                    <td><span class="text-success font-bold">{{ row.attendance_pct }}%</span></td>
+                    <td><span class="text-danger font-bold">{{ row.absenteeism_pct }}%</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center empty-state">No trend data available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Section 4: Working-Day Calendar & Missing Attendance Detection -->
+<div class="card-container">
+    <div class="card-header">
+        <div class="title-with-badge">
+            <h3><i class="fa-solid fa-calendar-xmark"></i> Working-Day Calendar & Missing Record Detection</h3>
+            <span class="badge badge-info">Rule: Unlogged Days != Automatic Absence</span>
+        </div>
+    </div>
+    <p class="text-muted text-sm mb-3">
+        Attendance standards dictate that missing logs must never be blindly converted into unexcused absences. 
+        The calendar auditor detects unlogged dates across the workforce independently.
+    </p>
+
+    {% if missing_records %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date Missing</th>
+                    <th>Employee Code</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Action Required</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in missing_records %}
+                <tr>
+                    <td><span class="badge badge-warning">{{ m.missing_date }}</span></td>
+                    <td><strong>{{ m.employee_code }}</strong></td>
+                    <td>{{ m.employee_name }}</td>
+                    <td><span class="dept-pill">{{ m.department }}</span></td>
+                    <td><span class="text-danger font-bold">Log Record or Verify Leave</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="reconciliation-box status-pass">
+        <div class="reconciliation-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="reconciliation-content">
+            <h4>Calendar Audit: Complete Coverage (0 Missing Records)</h4>
+            <p>Every active employee has a verified attendance transaction for all logged organizational working days.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

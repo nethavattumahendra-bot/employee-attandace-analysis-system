@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Attendance | AttendIQ WorkforceOS{% endblock %}
+{% block page_title %}Daily Attendance Management{% endblock %}
+{% block page_subtitle %}Record verified attendance, execute bulk entries, and manage controlled corrections with audit trails{% endblock %}
+
+{% block content %}
+<!-- Top Toolbar -->
+<div class="actions-toolbar">
+    <div class="actions-group">
+        <button class="btn btn-primary" onclick="openModal('recordAttendanceModal')">
+            <i class="fa-solid fa-plus"></i> Record Daily Attendance
+        </button>
+        <button class="btn btn-secondary" onclick="openModal('bulkAttendanceModal')">
+            <i class="fa-solid fa-list-check"></i> Bulk Department Entry
+        </button>
+        <a href="{{ url_for('attendance_calendar_view') }}" class="btn btn-outline">
+            <i class="fa-regular fa-calendar-days"></i> Monthly Calendar View
+        </a>
+    </div>
+    <div class="actions-group">
+        <a href="{{ url_for('audit_logs_page') }}" class="btn btn-outline">
+            <i class="fa-solid fa-clock-rotate-left"></i> View Audit Trail
+        </a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card" style="margin-top: 18px; margin-bottom: 20px;">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('attendance_page') }}" class="filter-form">
+            <div class="filter-group">
+                <label class="filter-label">Exact Date</label>
+                <input type="date" name="date" class="form-control" value="{{ selected_date or '' }}">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Month</label>
+                <input type="month" name="month" class="form-control" value="{{ selected_month or '' }}">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Department</label>
+                <select name="department" class="form-control">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                    <option value="{{ d.department_name }}" {% if selected_dept == d.department_name %}selected{% endif %}>{{ d.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Employee</label>
+                <select name="employee_id" class="form-control">
+                    <option value="">All Employees</option>
+                    {% for emp in employees %}
+                    <option value="{{ emp.employee_id }}" {% if selected_emp == emp.employee_id %}selected{% endif %}>{{ emp.employee_code }} - {{ emp.employee_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <select name="status" class="form-control">
+                    <option value="">All Statuses</option>
+                    {% for st in valid_statuses %}
+                    <option value="{{ st }}" {% if selected_status == st %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group" style="align-self: flex-end;">
+                <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-filter"></i> Apply</button>
+                <a href="{{ url_for('attendance_page') }}" class="btn btn-outline">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Attendance Records Table -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title"><i class="fa-solid fa-clipboard-list text-primary"></i> Attendance Records Log</h3>
+            <p class="card-subtitle">Showing {{ records|length }} verified attendance records</p>
+        </div>
+        <span class="badge badge-primary"><i class="fa-solid fa-shield-halved"></i> Application & DB UNIQUE Constrained</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Record ID</th>
+                    <th>Date</th>
+                    <th>Code</th>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td><span class="badge badge-light">#{{ r.attendance_id }}</span></td>
+                    <td><strong>{{ r.attendance_date }}</strong></td>
+                    <td><strong>{{ r.employee_code }}</strong></td>
+                    <td>{{ r.employee_name }}</td>
+                    <td><span class="dept-pill">{{ r.department }}</span></td>
+                    <td>
+                        <span class="badge badge-{{ r.status|lower }}">{{ r.status }}</span>
+                    </td>
+                    <td style="max-width: 200px;"><span class="text-muted">{{ r.remarks or '-' }}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" title="Controlled Correction"
+                                onclick="openCorrectionModal({{ r.attendance_id }}, '{{ r.employee_code }}', '{{ r.employee_name }}', '{{ r.attendance_date }}', '{{ r.status }}')">
+                            <i class="fa-solid fa-pen-to-square"></i> Correct
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="empty-cell">No attendance records match the specified filters.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Record Single Attendance -->
+<!-- ========================================================================= -->
+<div class="modal-overlay" id="recordAttendanceModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-calendar-plus text-primary"></i> Record Attendance</h3>
+            <button class="modal-close" onclick="closeModal('recordAttendanceModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('attendance_page') }}">
+            <input type="hidden" name="action" value="record">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="att_emp_id">Select Employee *</label>
+                    <select id="att_emp_id" name="employee_id" class="form-control" required>
+                        <option value="">-- Choose Employee --</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.employee_id }}">{{ emp.employee_code }} - {{ emp.employee_name }} ({{ emp.department }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="att_date">Date *</label>
+                    <input type="date" id="att_date" name="attendance_date" class="form-control" value="{{ selected_date or current_date }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="att_status">Status *</label>
+                    <select id="att_status" name="status" class="form-control" required>
+                        {% for st in valid_statuses %}
+                        <option value="{{ st }}" {% if st == 'Present' %}selected{% endif %}>{{ st }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="att_remarks">Remarks (Optional)</label>
+                    <input type="text" id="att_remarks" name="remarks" class="form-control" placeholder="e.g. Regular shift, Site visit">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('recordAttendanceModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Save Record</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Controlled Attendance Correction -->
+<!-- ========================================================================= -->
+<div class="modal-overlay" id="correctionModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-pen-ruler text-primary"></i> Controlled Attendance Correction</h3>
+            <button class="modal-close" onclick="closeModal('correctionModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('attendance_page') }}">
+            <input type="hidden" name="action" value="correct">
+            <input type="hidden" name="attendance_id" id="corr_id">
+            <div class="modal-body">
+                <div class="alert alert-info" style="font-size: 0.8125rem;">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>This correction will be permanently logged in the <strong>Audit Trail</strong> with your user identity and timestamp.</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Employee</label>
+                    <input type="text" id="corr_emp_info" class="form-control" disabled style="background: #f1f5f9;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="text" id="corr_date" class="form-control" disabled style="background: #f1f5f9;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="corr_new_status">New Attendance Status *</label>
+                    <select id="corr_new_status" name="new_status" class="form-control" required>
+                        {% for st in valid_statuses %}
+                        <option value="{{ st }}">{{ st }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="corr_reason">Correction Reason / Justification *</label>
+                    <textarea id="corr_reason" name="reason" class="form-control" rows="3" placeholder="Explain why this status is being corrected (required for audit compliance)" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('correctionModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Apply Correction</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Bulk Attendance Entry -->
+<!-- ========================================================================= -->
+<div class="modal-overlay" id="bulkAttendanceModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-list-check text-primary"></i> Bulk Department Attendance Entry</h3>
+            <button class="modal-close" onclick="closeModal('bulkAttendanceModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('attendance_page') }}">
+            <input type="hidden" name="action" value="bulk">
+            <div class="modal-body">
+                <div class="row" style="display: flex; gap: 16px; margin-bottom: 16px;">
+                    <div style="flex: 1;">
+                        <label class="form-label" for="bulk_date">Attendance Date *</label>
+                        <input type="date" id="bulk_date" name="bulk_date" class="form-control" value="{{ selected_date or current_date }}" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label" for="bulk_default_select">Batch Set All To</label>
+                        <select id="bulk_default_select" class="form-control" onchange="applyBulkStatus(this.value)">
+                            <option value="">-- Apply To All --</option>
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Holiday">Holiday</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="max-height: 350px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <table class="data-table" style="margin: 0;">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Employee Name</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in employees %}
+                            <tr>
+                                <td><strong>{{ emp.employee_code }}</strong></td>
+                                <td>{{ emp.employee_name }}</td>
+                                <td>{{ emp.department }}</td>
+                                <td>
+                                    <select name="status_{{ emp.employee_id }}" class="form-control bulk-st-dropdown" style="padding: 4px 8px; font-size: 0.8125rem;">
+                                        {% for st in valid_statuses %}
+                                        <option value="{{ st }}" {% if st == 'Present' %}selected{% endif %}>{{ st }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" name="remarks_{{ emp.employee_id }}" class="form-control" style="padding: 4px 8px; font-size: 0.8125rem;" placeholder="Shift log">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('bulkAttendanceModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Submit All Records</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openCorrectionModal(attId, empCode, empName, attDate, currentStatus) {
+        document.getElementById('corr_id').value = attId;
+        document.getElementById('corr_emp_info').value = `${empCode} - ${empName}`;
+        document.getElementById('corr_date').value = attDate;
+        document.getElementById('corr_new_status').value = currentStatus;
+        document.getElementById('corr_reason').value = '';
+        openModal('correctionModal');
+    }
+
+    function applyBulkStatus(val) {
+        if (!val) return;
+        document.querySelectorAll('.bulk-st-dropdown').forEach(sel => {
+            sel.value = val;
+        });
+    }
+</script>
+{% endblock %}

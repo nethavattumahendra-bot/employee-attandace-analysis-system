@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Trail | AttendIQ WorkforceOS{% endblock %}
+{% block page_title %}System Audit Trail{% endblock %}
+{% block page_subtitle %}Immutable chronological audit log of attendance corrections, role decisions, and status modifications{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Attendance Correction Audit Trail</h3>
+            <p class="card-subtitle">Every modification tracks historical status, new status, supervisor justification, and execution timestamp</p>
+        </div>
+        <span class="badge badge-pill-accent"><i class="fa-solid fa-shield-halved"></i> Tamper-Evident</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Audit ID</th>
+                    <th>Date Modified</th>
+                    <th>Attendance Date</th>
+                    <th>Employee Code</th>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Transition</th>
+                    <th>Justification / Reason</th>
+                    <th>Changed By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if audit_logs %}
+                    {% for log in audit_logs %}
+                    <tr>
+                        <td><strong>#{{ log.audit_id }}</strong></td>
+                        <td><small class="text-muted">{{ log.created_at }}</small></td>
+                        <td>{{ log.attendance_date }}</td>
+                        <td><strong>{{ log.employee_code }}</strong></td>
+                        <td>{{ log.employee_name }}</td>
+                        <td>{{ log.department }}</td>
+                        <td>
+                            <span class="badge badge-{{ log.old_status|lower if log.old_status else 'info' }}">{{ log.old_status or 'None' }}</span>
+                            <i class="fa-solid fa-arrow-right text-muted" style="font-size: 0.75rem; margin: 0 4px;"></i>
+                            <span class="badge badge-{{ log.new_status|lower }}">{{ log.new_status }}</span>
+                        </td>
+                        <td style="max-width: 250px;">{{ log.reason }}</td>
+                        <td>
+                            <span class="badge badge-primary"><i class="fa-solid fa-user-shield"></i> {{ log.changed_by }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="empty-cell">No audit log entries recorded yet. Controlled corrections will appear here.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

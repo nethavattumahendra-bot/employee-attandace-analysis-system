@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Calendar Attendance | AttendIQ WorkforceOS{% endblock %}
+{% block page_title %}Monthly Attendance Calendar{% endblock %}
+{% block page_subtitle %}Visual calendar mapping daily employee attendance, absences, leaves, and holidays{% endblock %}
+
+{% block content %}
+<!-- Filters Toolbar -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('attendance_calendar_view') }}" class="filter-form">
+            <div class="filter-group">
+                <label class="filter-label">Month</label>
+                <input type="month" name="month" class="form-control" value="{{ selected_month }}">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Department</label>
+                <select name="department" class="form-control">
+                    <option value="">-- All Departments --</option>
+                    {% for d in departments %}
+                    <option value="{{ d.department_name }}" {% if selected_dept == d.department_name %}selected{% endif %}>{{ d.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Employee</label>
+                <select name="employee_id" class="form-control">
+                    <option value="">-- All Employees --</option>
+                    {% for emp in employees %}
+                    <option value="{{ emp.employee_id }}" {% if selected_emp == emp.employee_id %}selected{% endif %}>{{ emp.employee_code }} - {{ emp.employee_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group" style="align-self: flex-end;">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Apply Filter</button>
+                <a href="{{ url_for('attendance_calendar_view') }}" class="btn btn-outline">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Calendar Legend -->
+<div class="calendar-legend">
+    <div class="legend-item"><span class="legend-dot status-dot-present"></span> Present</div>
+    <div class="legend-item"><span class="legend-dot status-dot-absent"></span> Absent</div>
+    <div class="legend-item"><span class="legend-dot status-dot-leave"></span> Approved Leave</div>
+    <div class="legend-item"><span class="legend-dot status-dot-holiday"></span> Holiday</div>
+    <div class="legend-item text-muted" style="margin-left: auto;">
+        <i class="fa-solid fa-database"></i> {{ calendar_data.total_records }} Records logged for {{ calendar_data.month }}
+    </div>
+</div>
+
+<!-- Calendar Grid -->
+<div class="calendar-grid">
+    {% for day in range(1, 32) %}
+        {% set day_str = "%s-%02d"|format(calendar_data.month, day) %}
+        {% set day_data = calendar_data.days.get(day_str) %}
+        <div class="calendar-day-cell {% if day_data %}has-records{% else %}no-records{% endif %}">
+            <div class="day-number">{{ "%02d"|format(day) }}</div>
+            {% if day_data %}
+                <div class="day-stats">
+                    {% if day_data.Present > 0 %}
+                    <span class="badge badge-success" title="{{ day_data.Present }} Present">{{ day_data.Present }}P</span>
+                    {% endif %}
+                    {% if day_data.Absent > 0 %}
+                    <span class="badge badge-danger" title="{{ day_data.Absent }} Absent">{{ day_data.Absent }}A</span>
+                    {% endif %}
+                    {% if day_data.Leave > 0 %}
+                    <span class="badge badge-leave" title="{{ day_data.Leave }} Leave">{{ day_data.Leave }}L</span>
+                    {% endif %}
+                    {% if day_data.Holiday > 0 %}
+                    <span class="badge badge-holiday" title="{{ day_data.Holiday }} Holiday">{{ day_data.Holiday }}H</span>
+                    {% endif %}
+                </div>
+                <div class="day-total text-muted">{{ day_data.total }} logged</div>
+            {% else %}
+                <div class="no-entry-text">-</div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Calendar Day Details Modal -->
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fa-solid fa-list-ul text-primary"></i> Daily Detail Log for {{ calendar_data.month }}</h3>
+        <span class="text-muted" style="font-size: 0.8125rem;">Showing entries recorded across filter criteria</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Employee Code</th>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set found_any = false %}
+                {% for d_str, d_info in calendar_data.days.items() %}
+                    {% for rec in d_info.records %}
+                    {% set found_any = true %}
+                    <tr>
+                        <td><strong>{{ rec.attendance_date }}</strong></td>
+                        <td>{{ rec.employee_code }}</td>
+                        <td>{{ rec.employee_name }}</td>
+                        <td>{{ rec.department }}</td>
+                        <td>
+                            <span class="badge badge-{{ rec.status|lower }}">{{ rec.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+                {% if not found_any %}
+                <tr>
+                    <td colspan="5" class="empty-cell">No attendance entries recorded for this month/filter combination.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

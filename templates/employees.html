@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Employees | AttendIQ WorkforceOS{% endblock %}
+{% block page_title %}Employee Directory{% endblock %}
+{% block page_subtitle %}Manage organizational personnel, roles, departments, and active statuses{% endblock %}
+
+{% block content %}
+<div class="card">
+    <!-- Top Action Toolbar -->
+    <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+        <form method="GET" action="{{ url_for('employees_page') }}" class="search-form" style="display: flex; gap: 10px; flex: 1; min-width: 280px;">
+            <div class="input-with-icon" style="flex: 1;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search by code, name, department..." class="form-control">
+            </div>
+            <select name="by" class="form-control" style="width: 140px;">
+                <option value="all" {% if search_by == 'all' %}selected{% endif %}>All Fields</option>
+                <option value="code" {% if search_by == 'code' %}selected{% endif %}>Code</option>
+                <option value="name" {% if search_by == 'name' %}selected{% endif %}>Name</option>
+                <option value="department" {% if search_by == 'department' %}selected{% endif %}>Department</option>
+            </select>
+            <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-filter"></i> Search</button>
+            {% if search_query %}
+            <a href="{{ url_for('employees_page') }}" class="btn btn-outline">Clear</a>
+            {% endif %}
+        </form>
+
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('export_employees_csv') }}" class="btn btn-outline">
+                <i class="fa-solid fa-download"></i> Export CSV
+            </a>
+            <button type="button" class="btn btn-primary" onclick="openModal('addEmployeeModal')">
+                <i class="fa-solid fa-user-plus"></i> Add Employee
+            </button>
+        </div>
+    </div>
+
+    <!-- Employee Table -->
+    <div class="card-body" style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Code</th>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Email</th>
+                    <th>Role Title</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td><span class="badge badge-primary">#{{ emp.employee_id }}</span></td>
+                    <td><strong>{{ emp.employee_code }}</strong></td>
+                    <td><strong>{{ emp.employee_name }}</strong></td>
+                    <td><span class="dept-pill">{{ emp.department }}</span></td>
+                    <td class="text-muted">{{ emp.email or '-' }}</td>
+                    <td>{{ emp.role_title or 'Staff' }}</td>
+                    <td>
+                        {% if emp.is_active %}
+                        <span class="status-pill status-active"><i class="fa-solid fa-circle-check"></i> Active</span>
+                        {% else %}
+                        <span class="status-pill status-inactive"><i class="fa-solid fa-circle-xmark"></i> Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-cell">
+                        <button class="btn-icon text-info" title="View Attendance History" onclick="viewHistory({{ emp.employee_id }})">
+                            <i class="fa-regular fa-clock"></i>
+                        </button>
+                        <button class="btn-icon text-primary" title="Edit Employee" 
+                                onclick="openEditModal({{ emp.employee_id }}, '{{ emp.employee_code }}', '{{ emp.employee_name }}', '{{ emp.department }}', '{{ emp.email or '' }}', '{{ emp.role_title or 'Staff' }}')">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                        </button>
+                        <form method="POST" action="{{ url_for('toggle_employee_status', emp_id=emp.employee_id) }}" style="display: inline;"
+                              onsubmit="return confirm('Toggle active status for {{ emp.employee_code }}?');">
+                            <button type="submit" class="btn-icon {% if emp.is_active %}text-warning{% else %}text-success{% endif %}" title="Toggle Active Status">
+                                <i class="fa-solid {% if emp.is_active %}fa-user-slash{% else %}fa-user-check{% endif %}"></i>
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('delete_employee_endpoint', emp_id=emp.employee_id) }}" style="display: inline;"
+                              onsubmit="return confirm('Are you sure you want to delete {{ emp.employee_code }}? Deletion is blocked if attendance history exists.');">
+                            <button type="submit" class="btn-icon text-danger" title="Delete Employee">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="empty-cell">No employees found matching the search criteria.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Add Employee -->
+<!-- ========================================================================= -->
+<div class="modal-overlay" id="addEmployeeModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-user-plus text-primary"></i> Add New Employee</h3>
+            <button class="modal-close" onclick="closeModal('addEmployeeModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('employees_page') }}">
+            <input type="hidden" name="action" value="add">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="add_code">Employee Code (Unique) *</label>
+                    <input type="text" id="add_code" name="employee_code" class="form-control" placeholder="e.g. EMP013" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="add_name">Full Name *</label>
+                    <input type="text" id="add_name" name="employee_name" class="form-control" placeholder="e.g. Rachel Green" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="add_dept">Department *</label>
+                    <select id="add_dept" name="department" class="form-control" required>
+                        {% for d in departments %}
+                        <option value="{{ d.department_name }}">{{ d.department_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="add_email">Corporate Email</label>
+                    <input type="email" id="add_email" name="email" class="form-control" placeholder="rachel@apextech.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="add_role">Role Title</label>
+                    <input type="text" id="add_role" name="role_title" class="form-control" placeholder="e.g. Senior Software Engineer" value="Staff">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('addEmployeeModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Add Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Edit Employee -->
+<!-- ========================================================================= -->
+<div class="modal-overlay" id="editEmployeeModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-user-pen text-primary"></i> Edit Employee</h3>
+            <button class="modal-close" onclick="closeModal('editEmployeeModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('employees_page') }}">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="employee_id" id="edit_id">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Employee Code</label>
+                    <input type="text" id="edit_code" class="form-control" disabled style="background: #f1f5f9;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit_name">Full Name *</label>
+                    <input type="text" id="edit_name" name="employee_name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit_dept">Department *</label>
+                    <select id="edit_dept" name="department" class="form-control" required>
+                        {% for d in departments %}
+                        <option value="{{ d.department_name }}">{{ d.department_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit_email">Email</label>
+                    <input type="email" id="edit_email" name="email" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit_role_title">Role Title</label>
+                    <input type="text" id="edit_role_title" name="role_title" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('editEmployeeModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: View Attendance History -->
+<!-- ========================================================================= -->
+<div class="modal-overlay" id="historyModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title" id="historyModalTitle"><i class="fa-regular fa-clock text-primary"></i> Attendance History</h3>
+            <button class="modal-close" onclick="closeModal('historyModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="historyLoading" style="text-align: center; padding: 20px;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x text-primary"></i>
+                <p>Loading attendance history...</p>
+            </div>
+            <div id="historyContent" style="display: none; max-height: 400px; overflow-y: auto;">
+                <table class="data-table" style="margin: 0;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal('historyModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditModal(id, code, name, dept, email, role) {
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_code').value = code;
+        document.getElementById('edit_name').value = name;
+        document.getElementById('edit_dept').value = dept;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_role_title').value = role;
+        openModal('editEmployeeModal');
+    }
+
+    function viewHistory(empId) {
+        document.getElementById('historyLoading').style.display = 'block';
+        document.getElementById('historyContent').style.display = 'none';
+        openModal('historyModal');
+
+        fetch(`/employees/${empId}/history`)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('historyLoading').style.display = 'none';
+                document.getElementById('historyContent').style.display = 'block';
+                document.getElementById('historyModalTitle').innerHTML = 
+                    `<i class="fa-regular fa-clock text-primary"></i> Attendance History: ${data.employee.employee_name} (${data.employee.employee_code})`;
+                
+                const tbody = document.getElementById('historyTableBody');
+                tbody.innerHTML = '';
+                if (data.history && data.history.length > 0) {
+                    data.history.forEach(h => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${h.attendance_date}</strong></td>
+                            <td><span class="badge badge-${h.status.toLowerCase()}">${h.status}</span></td>
+                            <td><span class="text-muted">${h.remarks || '-'}</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="3" class="empty-cell">No attendance records found.</td></tr>`;
+                }
+            })
+            .catch(err => {
+                document.getElementById('historyLoading').innerHTML = `<p class="text-danger">Failed to load history: ${err}</p>`;
+            });
+    }
+</script>
+{% endblock %}

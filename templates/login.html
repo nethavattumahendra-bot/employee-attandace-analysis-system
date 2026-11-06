@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - AttendIQ Enterprise Workforce Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Dark/Light Theme Preload (Prevents FOUT) -->
+    <script>
+        (function() {
+            try {
+                const saved = localStorage.getItem('attendiq_theme');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const theme = saved || (prefersDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+    <style>
+        .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 24px;
+        }
+        .auth-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+        }
+        .auth-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: #ffffff;
+            padding: 32px 28px;
+            text-align: center;
+        }
+        .auth-header i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+        .auth-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .auth-header p {
+            font-size: 0.875rem;
+            opacity: 0.85;
+            margin: 6px 0 0 0;
+        }
+        .auth-body {
+            padding: 32px 28px;
+        }
+        .demo-roles-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 18px;
+        }
+        .demo-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .demo-btn:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 24px 0 16px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .divider::before { margin-right: .75em; }
+        .divider::after { margin-left: .75em; }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper" style="position: relative;">
+        <!-- Theme Toggle Button -->
+        <div style="position: absolute; top: 24px; right: 24px; z-index: 50;">
+            <button class="icon-btn theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle Theme" title="Toggle Dark/Light Mode" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); cursor: pointer;">
+                <i class="fa-solid fa-moon dark-icon" style="color: #ffffff; font-size: 1.1rem;"></i>
+                <i class="fa-solid fa-sun light-icon" style="color: #f59e0b; font-size: 1.1rem;"></i>
+            </button>
+        </div>
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fa-solid fa-layer-group"></i>
+                <h2>AttendIQ Enterprise</h2>
+                <p>Workforce Management & Analytics OS</p>
+            </div>
+
+            <div class="auth-body">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}" style="margin-bottom: 16px; font-size: 0.8125rem;">
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('login_page') }}">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label" for="username">Username or Corporate Email</label>
+                        <div class="input-with-icon">
+                            <i class="fa-regular fa-user"></i>
+                            <input type="text" id="username" name="username" class="form-control" placeholder="admin or admin@apextech.com" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label" for="password">Password</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="password" name="password" class="form-control" placeholder="••••••••••••" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to Platform
+                    </button>
+                </form>
+
+                <div class="divider">1-Click Evaluation Accounts</div>
+                <div class="demo-roles-grid">
+                    <a href="{{ url_for('quick_demo_login', role='admin') }}" class="demo-btn" title="Password: password123">
+                        <i class="fa-solid fa-shield-halved text-primary"></i>
+                        <span>Administrator</span>
+                    </a>
+                    <a href="{{ url_for('quick_demo_login', role='hr') }}" class="demo-btn" title="Password: password123">
+                        <i class="fa-solid fa-user-tie text-success"></i>
+                        <span>HR Manager</span>
+                    </a>
+                    <a href="{{ url_for('quick_demo_login', role='manager') }}" class="demo-btn" title="Password: password123">
+                        <i class="fa-solid fa-users-gear text-warning"></i>
+                        <span>Dept Manager</span>
+                    </a>
+                    <a href="{{ url_for('quick_demo_login', role='employee') }}" class="demo-btn" title="Password: password123">
+                        <i class="fa-solid fa-id-badge text-info"></i>
+                        <span>Employee ESS</span>
+                    </a>
+                </div>
+
+                <div style="text-align: center; margin-top: 24px; font-size: 0.75rem; color: #94a3b8;">
+                    Apex Global Technologies • Enterprise Multi-Tenant SaaS
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

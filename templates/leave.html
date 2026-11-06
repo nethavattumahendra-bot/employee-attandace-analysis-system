@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Management | AttendIQ WorkforceOS{% endblock %}
+{% block page_title %}Leave Management{% endblock %}
+{% block page_subtitle %}Review employee leave requests, approve time-off, and synchronize with attendance records{% endblock %}
+
+{% block content %}
+<!-- Leave Stats Toolbar -->
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-icon icon-amber">
+            <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-label">Pending Review</span>
+            <h2 class="metric-val text-warning">{{ summary.Pending }}</h2>
+            <span class="metric-trend text-muted">Awaiting supervisor decision</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon icon-green">
+            <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-label">Approved Requests</span>
+            <h2 class="metric-val text-success">{{ summary.Approved }}</h2>
+            <span class="metric-trend text-success">Synced to attendance log</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon icon-red">
+            <i class="fa-solid fa-ban"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-label">Rejected Requests</span>
+            <h2 class="metric-val text-danger">{{ summary.Rejected }}</h2>
+            <span class="metric-trend text-muted">Declined requests</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon icon-blue">
+            <i class="fa-solid fa-umbrella-beach"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-label">Total Leave Days</span>
+            <h2 class="metric-val text-primary">{{ summary.total_days }}</h2>
+            <span class="metric-trend text-muted">Cumulative days requested</span>
+        </div>
+    </div>
+</div>
+
+<!-- Actions Toolbar -->
+<div class="actions-toolbar" style="margin-top: 18px;">
+    <button class="btn btn-primary" onclick="openModal('applyLeaveModal')">
+        <i class="fa-solid fa-plus"></i> Submit Leave Request
+    </button>
+</div>
+
+<!-- Leave Requests Table -->
+<div class="card" style="margin-top: 20px;">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title"><i class="fa-solid fa-business-time text-primary"></i> Leave Applications</h3>
+            <p class="card-subtitle">All submitted time-off requests with approval audit</p>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Type</th>
+                    <th>Dates</th>
+                    <th>Days</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Reviewer Notes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if leave_requests %}
+                    {% for req in leave_requests %}
+                    <tr>
+                        <td><strong>#{{ req.leave_id }}</strong></td>
+                        <td>
+                            <strong>{{ req.employee_name }}</strong>
+                            <div class="text-muted" style="font-size: 0.75rem;">{{ req.employee_code }}</div>
+                        </td>
+                        <td>{{ req.department }}</td>
+                        <td>
+                            <span class="badge badge-pill-accent">{{ req.leave_type }}</span>
+                        </td>
+                        <td>
+                            {{ req.start_date }}
+                            {% if req.start_date != req.end_date %}
+                            <br><span class="text-muted">to {{ req.end_date }}</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ req.days_count }}</strong></td>
+                        <td style="max-width: 220px;" title="{{ req.reason }}">{{ req.reason }}</td>
+                        <td>
+                            {% if req.status == 'Approved' %}
+                            <span class="badge badge-success"><i class="fa-solid fa-check"></i> Approved</span>
+                            {% elif req.status == 'Rejected' %}
+                            <span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> Rejected</span>
+                            {% else %}
+                            <span class="badge badge-warning"><i class="fa-solid fa-clock"></i> Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="max-width: 180px;">
+                            {% if req.review_notes %}
+                            <small class="text-muted">{{ req.review_notes }}</small>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.status == 'Pending' and session.get('role') in ['admin', 'hr', 'manager'] %}
+                            <div class="btn-group-sm">
+                                <button class="btn btn-sm btn-success" onclick="openReviewModal({{ req.leave_id }}, 'Approved', '{{ req.employee_name }}')">
+                                    <i class="fa-solid fa-check"></i> Approve
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="openReviewModal({{ req.leave_id }}, 'Rejected', '{{ req.employee_name }}')">
+                                    <i class="fa-solid fa-xmark"></i> Reject
+                                </button>
+                            </div>
+                            {% else %}
+                            <span class="text-muted" style="font-size: 0.8125rem;">Finalized</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="empty-cell">No leave requests found.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Apply Leave -->
+<!-- ========================================================================= -->
+<div class="modal-overlay" id="applyLeaveModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-paper-plane text-primary"></i> Apply for Leave</h3>
+            <button class="modal-close" onclick="closeModal('applyLeaveModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('leave_page') }}">
+            <input type="hidden" name="action" value="apply">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="leave_emp">Employee *</label>
+                    <select id="leave_emp" name="employee_id" class="form-control" required>
+                        {% for emp in employees %}
+                        <option value="{{ emp.employee_id }}">{{ emp.employee_code }} - {{ emp.employee_name }} ({{ emp.department }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="leave_type">Leave Type *</label>
+                    <select id="leave_type" name="leave_type" class="form-control" required>
+                        {% for lt in valid_leave_types %}
+                        <option value="{{ lt }}">{{ lt }} Leave</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="row" style="display: flex; gap: 12px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label" for="start_date">Start Date *</label>
+                        <input type="date" id="start_date" name="start_date" class="form-control" value="{{ current_date }}" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label" for="end_date">End Date *</label>
+                        <input type="date" id="end_date" name="end_date" class="form-control" value="{{ current_date }}" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reason">Reason *</label>
+                    <textarea id="reason" name="reason" class="form-control" rows="3" placeholder="Provide justification for manager review" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('applyLeaveModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Submit Application</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Review Leave Decision -->
+<!-- ========================================================================= -->
+<div class="modal-overlay" id="reviewLeaveModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title" id="reviewModalTitle"><i class="fa-solid fa-gavel text-primary"></i> Review Leave Request</h3>
+            <button class="modal-close" onclick="closeModal('reviewLeaveModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('leave_page') }}">
+            <input type="hidden" name="action" value="review">
+            <input type="hidden" name="leave_id" id="review_leave_id">
+            <input type="hidden" name="decision" id="review_decision">
+            <div class="modal-body">
+                <p id="reviewPromptText">Confirm your decision for this request.</p>
+                <div class="form-group">
+                    <label class="form-label" for="review_notes">Decision Notes (Optional)</label>
+                    <textarea id="review_notes" name="review_notes" class="form-control" rows="3" placeholder="Enter comments or instructions for the employee"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('reviewLeaveModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="reviewSubmitBtn">Confirm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openReviewModal(leaveId, decision, empName) {
+        document.getElementById('review_leave_id').value = leaveId;
+        document.getElementById('review_decision').value = decision;
+        document.getElementById('reviewPromptText').innerHTML = 
+            `Are you sure you want to <strong>${decision}</strong> the leave request for <strong>${empName}</strong>?` +
+            (decision === 'Approved' ? `<br><small class="text-success"><i class="fa-solid fa-info-circle"></i> This will automatically record 'Leave' status in attendance records for the requested dates.</small>` : '');
+        
+        const btn = document.getElementById('reviewSubmitBtn');
+        btn.className = decision === 'Approved' ? 'btn btn-success' : 'btn btn-danger';
+        btn.innerHTML = `<i class="fa-solid fa-${decision === 'Approved' ? 'check' : 'xmark'}"></i> Confirm ${decision}`;
+        
+        openModal('reviewLeaveModal');
+    }
+</script>
+{% endblock %}

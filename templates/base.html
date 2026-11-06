@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AttendIQ Enterprise - Workforce Management Platform{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Dark/Light Theme Preload (Prevents FOUT) -->
+    <script>
+        (function() {
+            try {
+                const saved = localStorage.getItem('attendiq_theme');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const theme = saved || (prefersDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-layer-group brand-icon"></i>
+                <div class="brand-text">
+                    <span class="brand-title">AttendIQ</span>
+                    <span class="brand-sub">WorkforceOS</span>
+                </div>
+            </div>
+
+            <!-- Organization Badge -->
+            <div class="org-chip" title="Active Tenant">
+                <i class="fa-solid fa-building"></i>
+                <span>{{ current_org.org_name if current_org else 'Apex Global Technologies' }}</span>
+            </div>
+
+            <nav class="sidebar-menu">
+                <div class="menu-section-label">CORE WORKFORCE</div>
+                <a href="{{ url_for('dashboard') }}" class="menu-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('employees_page') }}" class="menu-item {% if active_page == 'employees' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Employees</span>
+                </a>
+                <a href="{{ url_for('attendance_page') }}" class="menu-item {% if active_page == 'attendance' %}active{% endif %}">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Attendance Log</span>
+                </a>
+                <a href="{{ url_for('attendance_calendar_view') }}" class="menu-item {% if active_page == 'calendar' %}active{% endif %}">
+                    <i class="fa-regular fa-calendar-days"></i>
+                    <span>Monthly Calendar</span>
+                </a>
+                <a href="{{ url_for('leave_page') }}" class="menu-item {% if active_page == 'leave' %}active{% endif %}">
+                    <i class="fa-solid fa-business-time"></i>
+                    <span>Leave Requests</span>
+                </a>
+
+                <div class="menu-section-label">SELF SERVICE & AI</div>
+                <a href="{{ url_for('employee_portal') }}" class="menu-item {% if active_page == 'portal' %}active{% endif %}">
+                    <i class="fa-solid fa-id-badge"></i>
+                    <span>My Portal (ESS)</span>
+                </a>
+                <a href="{{ url_for('ai_insights_page') }}" class="menu-item {% if active_page == 'insights' %}active{% endif %}">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>AI Insights</span>
+                    <span class="badge-pill-accent">AI</span>
+                </a>
+
+                <div class="menu-section-label">ANALYTICS & AUDIT</div>
+                <a href="{{ url_for('analytics_page') }}" class="menu-item {% if active_page == 'analytics' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="{{ url_for('reports_page') }}" class="menu-item {% if active_page == 'reports' %}active{% endif %}">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    <span>Reports & Charts</span>
+                </a>
+                <a href="{{ url_for('audit_logs_page') }}" class="menu-item {% if active_page == 'audit' %}active{% endif %}">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Audit Trail</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="db-indicator {% if db_status.is_mysql_active %}status-online{% else %}status-fallback{% endif %}">
+                    <span class="pulse-dot"></span>
+                    <div class="status-info">
+                        <strong>Engine: {{ db_status.active_engine|upper }}</strong>
+                        <small>{% if db_status.is_mysql_active %}MySQL Production{% else %}SQLite Engine{% endif %}</small>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-wrapper">
+            <!-- Top Navbar -->
+            <header class="top-nav">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle Navigation">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="page-header-info">
+                        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                        <p class="text-muted">{% block page_subtitle %}Enterprise Workforce Analytics & Management{% endblock %}</p>
+                    </div>
+                </div>
+
+                <div class="top-nav-actions">
+                    <!-- Theme Toggle Button -->
+                    <button class="icon-btn theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle Theme" title="Toggle Dark/Light Mode">
+                        <i class="fa-solid fa-moon dark-icon"></i>
+                        <i class="fa-solid fa-sun light-icon"></i>
+                    </button>
+
+                    <!-- Notifications Dropdown -->
+                    <div class="dropdown-wrapper">
+                        <button class="icon-btn" id="notifBtn" aria-label="Notifications" title="Notifications">
+                            <i class="fa-regular fa-bell"></i>
+                            {% if unread_count > 0 %}
+                            <span class="notif-badge">{{ unread_count }}</span>
+                            {% endif %}
+                        </button>
+                        <div class="dropdown-pane" id="notifPane">
+                            <div class="dropdown-header">
+                                <strong>Notifications</strong>
+                                {% if unread_count > 0 %}
+                                <a href="javascript:void(0)" onclick="markAllNotificationsRead()" class="link-action">Mark all read</a>
+                                {% endif %}
+                            </div>
+                            <div class="dropdown-body">
+                                {% if unread_notifications %}
+                                    {% for n in unread_notifications %}
+                                    <div class="notif-item {% if not n.is_read %}unread{% endif %}">
+                                        <div class="notif-icon"><i class="fa-solid fa-info-circle"></i></div>
+                                        <div class="notif-content">
+                                            <p class="notif-title">{{ n.title }}</p>
+                                            <p class="notif-text">{{ n.message }}</p>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="empty-state-sm">No new notifications</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date Chip -->
+                    <div class="date-chip">
+                        <i class="fa-regular fa-calendar"></i>
+                        <span>{{ current_date }}</span>
+                    </div>
+
+                    <!-- User Profile / Role Switcher -->
+                    {% if current_user %}
+                    <div class="dropdown-wrapper">
+                        <button class="user-chip-btn" id="userMenuBtn">
+                            <div class="avatar-circle">{{ current_user.username[:2]|upper }}</div>
+                            <div class="user-meta">
+                                <span class="user-name">{{ current_user.employee_name or current_user.username }}</span>
+                                <span class="role-badge role-{{ current_user.role }}">{{ current_user.role|upper }}</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-muted" style="font-size: 0.75rem;"></i>
+                        </button>
+                        <div class="dropdown-pane user-dropdown" id="userMenuPane">
+                            <div class="dropdown-header">
+                                <div>
+                                    <strong>{{ current_user.username }}</strong>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ current_user.email }}</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-section-title">SWITCH DEMO ROLE</div>
+                            <a href="{{ url_for('quick_demo_login', role='admin') }}" class="dropdown-item">
+                                <i class="fa-solid fa-shield-halved"></i> Administrator
+                            </a>
+                            <a href="{{ url_for('quick_demo_login', role='hr') }}" class="dropdown-item">
+                                <i class="fa-solid fa-user-tie"></i> HR Manager
+                            </a>
+                            <a href="{{ url_for('quick_demo_login', role='manager') }}" class="dropdown-item">
+                                <i class="fa-solid fa-users-gear"></i> Dept Manager
+                            </a>
+                            <a href="{{ url_for('quick_demo_login', role='employee') }}" class="dropdown-item">
+                                <i class="fa-solid fa-id-badge"></i> Employee
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="{{ url_for('logout') }}" class="dropdown-item text-danger">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login_page') }}" class="btn btn-primary btn-sm">Sign In</a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Flash Notifications -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-container">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <i class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'danger' %}fa-circle-xmark{% elif category == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+                                <span>{{ message }}</span>
+                                <button type="button" class="close-btn" onclick="this.parentElement.remove();">&times;</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Page Body -->
+            <div class="content-body">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        function markAllNotificationsRead() {
+            fetch('/api/notifications/read-all', { method: 'POST' })
+                .then(r => r.json())
+                .then(() => {
+                    const b = document.querySelector('.notif-badge');
+                    if (b) b.remove();
+                    document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+                });
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Employee Attendance Analysis System - Dependencies
+pandas>=2.2.0
+numpy>=1.26.0
+matplotlib>=3.8.0
+mysql-connector-python>=8.0.0
+python-dotenv>=1.0.0
+Flask>=3.0.0
+python-pptx>=1.0.0
+pytest>=7.0.0

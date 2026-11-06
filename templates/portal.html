@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Portal | AttendIQ WorkforceOS{% endblock %}
+{% block page_title %}Employee Self-Service Portal{% endblock %}
+{% block page_subtitle %}Personal attendance records, leave tracking, and self-service requests{% endblock %}
+
+{% block content %}
+<!-- Employee Profile Header -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-body" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="avatar-circle-lg">{{ employee.employee_name[:2]|upper if employee else 'EM' }}</div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700;">{{ employee.employee_name if employee else 'Employee' }}</h2>
+                <div class="text-muted" style="font-size: 0.875rem; margin-top: 4px;">
+                    <span class="badge badge-primary">{{ employee.employee_code }}</span> • 
+                    <span><i class="fa-solid fa-building"></i> {{ employee.department }}</span> • 
+                    <span><i class="fa-regular fa-envelope"></i> {{ employee.email or 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="openModal('applyLeaveModal')">
+                <i class="fa-solid fa-paper-plane"></i> Apply for Leave
+            </button>
+            <a href="{{ url_for('download_report', report_type='employee') }}" class="btn btn-outline">
+                <i class="fa-solid fa-download"></i> Personal Report
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Personal KPIs -->
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-icon icon-green">
+            <i class="fa-solid fa-check-double"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-label">My Attendance %</span>
+            <h2 class="metric-val text-success">{{ summary.attendance_percentage }}%</h2>
+            <span class="metric-trend text-success"><i class="fa-solid fa-calculator"></i> P / (P + A)</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon icon-blue">
+            <i class="fa-solid fa-user-check"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-label">Days Present</span>
+            <h2 class="metric-val text-primary">{{ summary.total_present }}</h2>
+            <span class="metric-trend text-muted">Verified attendances</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon icon-red">
+            <i class="fa-solid fa-user-xmark"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-label">Days Absent</span>
+            <h2 class="metric-val text-danger">{{ summary.total_absent }}</h2>
+            <span class="metric-trend text-danger">{{ summary.absenteeism_percentage }}% absenteeism</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon icon-amber">
+            <i class="fa-solid fa-umbrella-beach"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-label">Approved Leaves</span>
+            <h2 class="metric-val text-warning">{{ summary.total_leave }}</h2>
+            <span class="metric-trend text-muted">Excluded from percentage</span>
+        </div>
+    </div>
+</div>
+
+<!-- Split Tables: My Leave Requests & Attendance Log -->
+<div class="content-split-grid" style="margin-top: 24px;">
+    <!-- My Leave Requests -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fa-solid fa-clock text-primary"></i> My Leave Applications</h3>
+            <span class="badge badge-pill-accent">{{ leave_history|length }} total</span>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Dates</th>
+                        <th>Days</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if leave_history %}
+                        {% for l in leave_history %}
+                        <tr>
+                            <td><strong>{{ l.leave_type }}</strong></td>
+                            <td>{{ l.start_date }} to {{ l.end_date }}</td>
+                            <td>{{ l.days_count }}</td>
+                            <td>
+                                {% if l.status == 'Approved' %}
+                                <span class="badge badge-success">Approved</span>
+                                {% elif l.status == 'Rejected' %}
+                                <span class="badge badge-danger">Rejected</span>
+                                {% else %}
+                                <span class="badge badge-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td><small class="text-muted">{{ l.review_notes or '-' }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="empty-cell">No leave requests submitted yet.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- My Attendance History -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fa-solid fa-list-check text-primary"></i> My Recent Attendance Log</h3>
+            <span class="text-muted" style="font-size: 0.8125rem;">Last 60 logged records</span>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if history %}
+                        {% for h in history %}
+                        <tr>
+                            <td><strong>{{ h.attendance_date }}</strong></td>
+                            <td><span class="badge badge-{{ h.status|lower }}">{{ h.status }}</span></td>
+                            <td><span class="text-muted">{{ h.remarks or '-' }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="empty-cell">No attendance recorded yet.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Apply Leave -->
+<!-- ========================================================================= -->
+<div class="modal-overlay" id="applyLeaveModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-paper-plane text-primary"></i> Apply for Leave</h3>
+            <button class="modal-close" onclick="closeModal('applyLeaveModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('leave_page') }}">
+            <input type="hidden" name="action" value="apply">
+            <input type="hidden" name="employee_id" value="{{ employee.employee_id if employee else 1 }}">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="portal_leave_type">Leave Type *</label>
+                    <select id="portal_leave_type" name="leave_type" class="form-control" required>
+                        {% for lt in valid_leave_types %}
+                        <option value="{{ lt }}">{{ lt }} Leave</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="row" style="display: flex; gap: 12px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label" for="portal_start_date">Start Date *</label>
+                        <input type="date" id="portal_start_date" name="start_date" class="form-control" value="{{ current_date }}" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label" for="portal_end_date">End Date *</label>
+                        <input type="date" id="portal_end_date" name="end_date" class="form-control" value="{{ current_date }}" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="portal_reason">Reason *</label>
+                    <textarea id="portal_reason" name="reason" class="form-control" rows="3" placeholder="Explain your reason for leave" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('applyLeaveModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Submit Leave Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
